@@ -6,11 +6,16 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -29,14 +34,21 @@ import com.hjq.permissions.XXPermissions;
 import com.shuyu.gsyvideoplayer.GSYVideoManager;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Enumeration;
 import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private Button btn_rotate_0,btn_rotate_90,btn_rotate_180,btn_rotate_270,btn_player,btn_clear,btn_show,btn_hide;
-    private TextView tv_storage;
+    private Button btn_rotate_0, btn_rotate_90, btn_rotate_180, btn_rotate_270, btn_player, btn_clear, btn_show, btn_hide;
+    private TextView tv_storage, tv_ip;
     private final String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
     private FloatWindowService.FloatBinder floatBinder;
@@ -50,10 +62,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_rotate_180 = findViewById(R.id.btn_rotate_180);
         btn_rotate_270 = findViewById(R.id.btn_rotate_270);
         tv_storage = findViewById(R.id.tv_storage);
-        btn_player= findViewById(R.id.btn_player);
-        btn_clear= findViewById(R.id.btn_clear);
-        btn_show= findViewById(R.id.btn_show);
-        btn_hide= findViewById(R.id.btn_hide);
+        btn_player = findViewById(R.id.btn_player);
+        btn_clear = findViewById(R.id.btn_clear);
+        btn_show = findViewById(R.id.btn_show);
+        btn_hide = findViewById(R.id.btn_hide);
+        tv_ip = findViewById(R.id.tv_ip);
         btn_rotate_0.setOnClickListener(this);
         btn_rotate_90.setOnClickListener(this);
         btn_rotate_180.setOnClickListener(this);
@@ -62,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_clear.setOnClickListener(this);
         btn_show.setOnClickListener(this);
         btn_hide.setOnClickListener(this);
+        tv_ip.setText("当前IP：" + getIPAddress());
         tv_storage.setText("可用 " + getSDAvailableSize() + "/总量" + getSDTotalSize());
         getStoragePermission();
         checkFloatPermission();
@@ -88,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void checkFloatPermission() {
-        if (!XXPermissions.isGranted(MainActivity.this,Permission.SYSTEM_ALERT_WINDOW)) {
+        if (!XXPermissions.isGranted(MainActivity.this, Permission.SYSTEM_ALERT_WINDOW)) {
             AlertDialog alertDialog = new AlertDialog.Builder(this)
                     //标题
                     .setTitle("权限申请")
@@ -174,7 +188,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private ServiceConnection connection=new ServiceConnection() {
+    private ServiceConnection connection = new ServiceConnection() {
 
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
@@ -183,17 +197,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             floatWindowService.setCallback(new FloatWindowService.Callback() {
                 @Override
                 public void closeClick() {
-                    Log.d(TAG,"closeClick");
+                    Log.d(TAG, "closeClick");
                 }
 
                 @Override
                 public void nextClick() {
-                    Log.d(TAG,"nextClick");
+                    Log.d(TAG, "nextClick");
                 }
 
                 @Override
                 public void playClick() {
-                    Log.d(TAG,"playClick");
+                    Log.d(TAG, "playClick");
                 }
             });
         }
@@ -234,5 +248,55 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         long blockSize = stat.getBlockSizeLong();
         long availableBlocks = stat.getAvailableBlocksLong();
         return Formatter.formatFileSize(MainActivity.this, blockSize * availableBlocks);
+    }
+
+
+    /**
+     * 获得IP地址，分为两种情况，一是wifi下，二是移动网络下，得到的ip地址是不一样的
+     */
+    private String getIPAddress() {
+        Context context = MainActivity.this;
+        NetworkInfo info = ((ConnectivityManager) context
+                .getSystemService(Context.CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
+        if (info != null && info.isConnected()) {
+            if (info.getType() == ConnectivityManager.TYPE_MOBILE) {//当前使用2G/3G/4G网络
+                try {
+                    //Enumeration<NetworkInterface> en=NetworkInterface.getNetworkInterfaces();
+                    for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
+                        NetworkInterface intf = en.nextElement();
+                        for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
+                            InetAddress inetAddress = enumIpAddr.nextElement();
+                            if (!inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
+                                return inetAddress.getHostAddress();
+                            }
+                        }
+                    }
+                } catch (SocketException e) {
+                    e.printStackTrace();
+                }
+            } else if (info.getType() == ConnectivityManager.TYPE_WIFI) {//当前使用无线网络
+                WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+                WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+                //调用方法将int转换为地址字符串
+                String ipAddress = intIP2StringIP(wifiInfo.getIpAddress());//得到IPV4地址
+                return ipAddress;
+            }
+        } else {
+            //当前无网络连接,请在设置中打开网络
+        }
+        return "xx.xx.xx.xx";
+    }
+
+    /**
+     * 将得到的int类型的IP转换为String类型
+     *
+     * @param ip
+     * @return
+     */
+    private String intIP2StringIP(int ip) {
+        return (ip & 0xFF) + "." +
+                ((ip >> 8) & 0xFF) + "." +
+                ((ip >> 16) & 0xFF) + "." +
+                (ip >> 24 & 0xFF);
     }
 }

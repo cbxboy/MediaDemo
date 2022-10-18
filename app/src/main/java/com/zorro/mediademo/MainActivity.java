@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_hide.setOnClickListener(this);
         tv_model.setText("手机型号：" + getSystemModel());
         tv_ip.setText("当前IP：" + getIPAddress());
-        tv_storage.setText("可用 " + getSDAvailableSize() + "/总量" + getSDTotalSize());
+        tv_storage.setText("可用：" + getSDAvailableSize() + "/总量：" + getSDTotalSize());
         getStoragePermission();
         checkFloatPermission();
     }

@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private Button btn_rotate_0, btn_rotate_90, btn_rotate_180, btn_rotate_270, btn_player, btn_clear, btn_show, btn_hide;
-    private TextView tv_storage, tv_ip;
+    private TextView tv_storage, tv_ip, tv_model;
     private final String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
     private FloatWindowService.FloatBinder floatBinder;
@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_show = findViewById(R.id.btn_show);
         btn_hide = findViewById(R.id.btn_hide);
         tv_ip = findViewById(R.id.tv_ip);
+        tv_model = findViewById(R.id.tv_model);
         btn_rotate_0.setOnClickListener(this);
         btn_rotate_90.setOnClickListener(this);
         btn_rotate_180.setOnClickListener(this);
@@ -75,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_clear.setOnClickListener(this);
         btn_show.setOnClickListener(this);
         btn_hide.setOnClickListener(this);
+        tv_model.setText("手机型号：" + getSystemModel());
         tv_ip.setText("当前IP：" + getIPAddress());
         tv_storage.setText("可用 " + getSDAvailableSize() + "/总量" + getSDTotalSize());
         getStoragePermission();
@@ -298,5 +300,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 ((ip >> 8) & 0xFF) + "." +
                 ((ip >> 16) & 0xFF) + "." +
                 (ip >> 24 & 0xFF);
+    }
+
+    /**
+     * 获取手机型号
+     *
+     * @return 手机型号
+     */
+    public static String getSystemModel() {
+        return android.os.Build.MODEL;
     }
 }

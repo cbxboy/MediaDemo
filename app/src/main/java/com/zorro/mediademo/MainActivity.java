@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private Button btn_rotate_0, btn_rotate_90, btn_rotate_180, btn_rotate_270, btn_player, btn_clear, btn_show, btn_hide;
-    private TextView tv_storage, tv_ip, tv_model;
+    private TextView tv_storage, tv_ip, tv_model,tv_network_type;
     private final String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
     private FloatWindowService.FloatBinder floatBinder;
@@ -68,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_hide = findViewById(R.id.btn_hide);
         tv_ip = findViewById(R.id.tv_ip);
         tv_model = findViewById(R.id.tv_model);
+        tv_network_type = findViewById(R.id.tv_network_type);
         btn_rotate_0.setOnClickListener(this);
         btn_rotate_90.setOnClickListener(this);
         btn_rotate_180.setOnClickListener(this);
@@ -76,6 +77,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_clear.setOnClickListener(this);
         btn_show.setOnClickListener(this);
         btn_hide.setOnClickListener(this);
+        tv_network_type.setText("当前网络状态：" + getNetWorkType());
         tv_model.setText("手机型号：" + getSystemModel());
         tv_ip.setText("当前IP：" + getIPAddress());
         tv_storage.setText("可用：" + getSDAvailableSize() + "/总量：" + getSDTotalSize());
@@ -252,6 +254,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return Formatter.formatFileSize(MainActivity.this, blockSize * availableBlocks);
     }
 
+
+    /**
+     * 获取网络状态
+     */
+    private String getNetWorkType() {
+        Context context = MainActivity.this;
+        NetworkInfo info = ((ConnectivityManager) context
+                .getSystemService(Context.CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
+        if (info != null && info.isConnected()) {
+            if (info.getType() == ConnectivityManager.TYPE_MOBILE) {//当前使用2G/3G/4G/5G网络
+                return "移动网络";
+            } else if (info.getType() == ConnectivityManager.TYPE_WIFI) {//当前使用无线网络
+                return "Wifi";
+            }
+        } else {
+            return "当前无网络连接";
+        }
+        return null;
+    }
 
     /**
      * 获得IP地址，分为两种情况，一是wifi下，二是移动网络下，得到的ip地址是不一样的

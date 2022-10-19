@@ -36,6 +36,8 @@ public class SimplePlayerActivity extends AppCompatActivity {
     private void init() {
         videoPlayer =  (StandardGSYVideoPlayer)findViewById(R.id.video_player);
 
+        //MP4:http://vfx.mtime.cn/Video/2019/02/04/mp4/190204084208765161.mp4
+        //MP3:https://www.ytmp3.cn/down/78359.mp3
         String source1 = "http://vfx.mtime.cn/Video/2019/02/04/mp4/190204084208765161.mp4";
         videoPlayer.setUp(source1, true, "测试视频");
 

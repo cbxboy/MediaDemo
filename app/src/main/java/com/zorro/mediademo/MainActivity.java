@@ -33,6 +33,15 @@ import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
 import com.shuyu.gsyvideoplayer.GSYVideoManager;
 
+import org.eclipse.paho.android.service.MqttAndroidClient;
+import org.eclipse.paho.client.mqttv3.IMqttActionListener;
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.IMqttToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.Inet4Address;
@@ -44,14 +53,19 @@ import java.util.Enumeration;
 import java.util.List;
 
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener,NetStateChangeObserver {
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private Button btn_rotate_0, btn_rotate_90, btn_rotate_180, btn_rotate_270, btn_player, btn_clear, btn_show, btn_hide;
+    private Button btn_rotate_0, btn_rotate_90, btn_rotate_180, btn_rotate_270, btn_player, btn_clear, btn_show, btn_hide,btn_send;
     private TextView tv_storage, tv_ip, tv_model,tv_network_type;
     private final String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
     private FloatWindowService.FloatBinder floatBinder;
+
+    private String clientId = "ExampleAndroidClient";
+    private MqttAndroidClient mqttAndroidClient;
+    private String host = "tcp://210.73.216.2:1883";
+    private MqttConnectOptions conOpt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +83,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tv_ip = findViewById(R.id.tv_ip);
         tv_model = findViewById(R.id.tv_model);
         tv_network_type = findViewById(R.id.tv_network_type);
+        btn_send = findViewById(R.id.btn_send);
+        btn_send.setOnClickListener(this);
         btn_rotate_0.setOnClickListener(this);
         btn_rotate_90.setOnClickListener(this);
         btn_rotate_180.setOnClickListener(this);
@@ -83,6 +99,92 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tv_storage.setText("可用：" + getSDAvailableSize() + "/总量：" + getSDTotalSize());
         getStoragePermission();
         checkFloatPermission();
+        setMqtt();
+        NetStateChangeReceiver.registerObserver(this);
+        NetStateChangeReceiver.registerReceiver(this);
+    }
+
+    private void setMqtt() {
+        clientId = clientId + System.currentTimeMillis();
+        mqttAndroidClient = new MqttAndroidClient(this,host,clientId);
+        conOpt = new MqttConnectOptions();
+        // 清除缓存
+        conOpt.setCleanSession(true);
+        // 设置超时时间，单位：秒
+        conOpt.setConnectionTimeout(10);
+        // 心跳包发送间隔，单位：秒
+        conOpt.setKeepAliveInterval(20);
+        // 用户名
+        conOpt.setUserName("admin");
+        // 密码
+        conOpt.setPassword("123456".toCharArray());
+        mqttAndroidClient.setCallback(new MqttCallback() {
+            @Override
+            public void connectionLost(Throwable cause) {
+                Log.d(TAG, "connectionLost: 连接断开");
+            }
+
+            @Override
+            public void messageArrived(String topic, MqttMessage message) throws Exception {
+                Log.d(TAG, "消息到达");
+            }
+
+            @Override
+            public void deliveryComplete(IMqttDeliveryToken token) {
+
+            }
+        });
+        try {
+            //进行连接
+            mqttAndroidClient.connect(conOpt, null, new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken asyncActionToken) {
+                    Log.d(TAG, "onSuccess: 连接成功");
+                    try {
+                        //连接成功后订阅主题
+                        mqttAndroidClient.subscribe("some topic", 2);
+
+                    } catch (MqttException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+
+                @Override
+                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                    Log.d(TAG, "onFailure: 连接失败");
+                }
+            });
+
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void publishMessage(String payload) {
+        try {
+            if (mqttAndroidClient.isConnected() == false) {
+                mqttAndroidClient.connect();
+            }
+
+            MqttMessage message = new MqttMessage();
+            message.setPayload(payload.getBytes());
+            message.setQos(0);
+            mqttAndroidClient.publish("some topic", message,null, new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken asyncActionToken) {
+                    Log.i(TAG, "publish succeed!");
+                }
+
+                @Override
+                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                    Log.i(TAG, "publish failed!");
+                }
+            });
+        } catch (MqttException e) {
+            Log.e(TAG, e.toString());
+            e.printStackTrace();
+        }
     }
 
     private void getStoragePermission() {
@@ -189,6 +291,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btn_hide:
                 unbindService(connection);
                 break;
+            case R.id.btn_send:
+                publishMessage("Hello!");
+                break;
         }
     }
 
@@ -207,6 +312,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 @Override
                 public void nextClick() {
                     Log.d(TAG, "nextClick");
+                    startActivity(new Intent(MainActivity.this, SimplePlayerActivity.class));
                 }
 
                 @Override
@@ -330,5 +436,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     public static String getSystemModel() {
         return android.os.Build.MODEL;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        NetStateChangeReceiver.unRegisterObserver(this);
+        NetStateChangeReceiver.unRegisterReceiver(this);
+    }
+
+    @Override
+    public void onNetDisconnected() {
+        tv_network_type.setText("无网络连接");
+    }
+
+    @Override
+    public void onNetConnected(NetworkType networkType) {
+        tv_network_type.setText(networkType.toString());
     }
 }

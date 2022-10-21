@@ -11,7 +11,9 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" /> <!-- mqtt -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
     <application
         android:allowBackup="true"
@@ -24,6 +26,15 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MediaDemo"
         tools:targetApi="31">
+        <receiver
+            android:name=".NetStateChangeReceiver"
+            android:enabled="true"
+            android:exported="true"></receiver>
+
+        <service
+            android:name=".MqttService"
+            android:enabled="true"
+            android:exported="true" />
 
         <activity
             android:name=".SimplePlayerActivity"
@@ -42,12 +53,13 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".FloatWindowService"/>
-
-        <!-- 表示当前项目已经适配了分区存储特性 -->
+        <service android:name=".FloatWindowService" /> <!-- 表示当前项目已经适配了分区存储特性 -->
         <meta-data
             android:name="ScopedStorage"
             android:value="true" />
+        <!-- Mqtt Service -->
+        <service android:name="org.eclipse.paho.android.service.MqttService">
+        </service>
     </application>
 
 </manifest>

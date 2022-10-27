@@ -25,6 +25,7 @@ import android.text.format.Formatter;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -58,14 +59,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final String TAG = MainActivity.class.getSimpleName();
     private Button btn_rotate_0, btn_rotate_90, btn_rotate_180, btn_rotate_270, btn_player, btn_clear, btn_show, btn_hide,btn_send;
     private TextView tv_storage, tv_ip, tv_model,tv_network_type;
-    private final String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
     private FloatWindowService.FloatBinder floatBinder;
 
-    private String clientId = "ExampleAndroidClient";
+    private String clientId = "AndroidClient_";
     private MqttAndroidClient mqttAndroidClient;
     private String host = "tcp://210.73.216.2:1883";
     private MqttConnectOptions conOpt;
+    private String device_id,store_id;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +98,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tv_model.setText("手机型号：" + getSystemModel());
         tv_ip.setText("当前IP：" + getIPAddress());
         tv_storage.setText("可用：" + getSDAvailableSize() + "/总量：" + getSDTotalSize());
+
+        device_id = SharePreferenceUtils.getString(this,"device_id");
+        store_id = SharePreferenceUtils.getString(this,"store_id");
+
         getStoragePermission();
         checkFloatPermission();
         setMqtt();
@@ -105,7 +110,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void setMqtt() {
-        clientId = clientId + System.currentTimeMillis();
+        clientId = clientId + device_id;
         mqttAndroidClient = new MqttAndroidClient(this,host,clientId);
         conOpt = new MqttConnectOptions();
         // 清除缓存
@@ -114,10 +119,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         conOpt.setConnectionTimeout(10);
         // 心跳包发送间隔，单位：秒
         conOpt.setKeepAliveInterval(20);
-        // 用户名
-        conOpt.setUserName("admin");
-        // 密码
-        conOpt.setPassword("123456".toCharArray());
+        conOpt.setUserName("1");
+        conOpt.setPassword("123".toCharArray());
         mqttAndroidClient.setCallback(new MqttCallback() {
             @Override
             public void connectionLost(Throwable cause) {
@@ -142,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Log.d(TAG, "onSuccess: 连接成功");
                     try {
                         //连接成功后订阅主题
-                        mqttAndroidClient.subscribe("some topic", 2);
+                        mqttAndroidClient.subscribe(store_id, 2);
 
                     } catch (MqttException e) {
                         e.printStackTrace();
@@ -170,7 +173,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             MqttMessage message = new MqttMessage();
             message.setPayload(payload.getBytes());
             message.setQos(0);
-            mqttAndroidClient.publish("some topic", message,null, new IMqttActionListener() {
+            mqttAndroidClient.publish(store_id, message,null, new IMqttActionListener() {
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken) {
                     Log.i(TAG, "publish succeed!");

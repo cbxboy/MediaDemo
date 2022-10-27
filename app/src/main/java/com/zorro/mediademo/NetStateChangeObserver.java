@@ -1,7 +1,5 @@
 package com.zorro.mediademo;
 
-import androidx.lifecycle.Observer;
-
 /**
  * @Author : cbx
  * @Email : 673591077@qq.com

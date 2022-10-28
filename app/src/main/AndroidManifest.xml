@@ -27,6 +27,13 @@
         android:theme="@style/Theme.MediaDemo"
         tools:targetApi="31">
         <activity
+            android:name=".DynamicLayoutActivity"
+            android:exported="false">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+        <activity
             android:name=".MainActivity"
             android:exported="false">
             <meta-data
@@ -65,7 +72,7 @@
         <meta-data
             android:name="ScopedStorage"
             android:value="true" /> <!-- Mqtt Service -->
-        <service android:name="org.eclipse.paho.android.service.MqttService"></service>
+        <service android:name="org.eclipse.paho.android.service.MqttService" />
     </application>
 
 </manifest>

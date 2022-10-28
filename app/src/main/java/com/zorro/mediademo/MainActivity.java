@@ -57,7 +57,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener,NetStateChangeObserver {
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private Button btn_rotate_0, btn_rotate_90, btn_rotate_180, btn_rotate_270, btn_player, btn_clear, btn_show, btn_hide,btn_send;
+    private Button btn_rotate_0, btn_rotate_90, btn_rotate_180, btn_rotate_270, btn_player, btn_clear, btn_show, btn_hide,btn_send,btn_dynamic;
     private TextView tv_storage, tv_ip, tv_model,tv_network_type;
 
     private FloatWindowService.FloatBinder floatBinder;
@@ -85,6 +85,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tv_model = findViewById(R.id.tv_model);
         tv_network_type = findViewById(R.id.tv_network_type);
         btn_send = findViewById(R.id.btn_send);
+        btn_dynamic = findViewById(R.id.btn_dynamic);
         btn_send.setOnClickListener(this);
         btn_rotate_0.setOnClickListener(this);
         btn_rotate_90.setOnClickListener(this);
@@ -94,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_clear.setOnClickListener(this);
         btn_show.setOnClickListener(this);
         btn_hide.setOnClickListener(this);
+        btn_dynamic.setOnClickListener(this);
         tv_network_type.setText("当前网络状态：" + getNetWorkType());
         tv_model.setText("手机型号：" + getSystemModel());
         tv_ip.setText("当前IP：" + getIPAddress());
@@ -104,7 +106,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         getStoragePermission();
         checkFloatPermission();
-        setMqtt();
+        //链接MQTT
+        //setMqtt();
         NetStateChangeReceiver.registerObserver(this);
         NetStateChangeReceiver.registerReceiver(this);
     }
@@ -296,6 +299,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.btn_send:
                 publishMessage("Hello!");
+                break;
+            case R.id.btn_dynamic:
+                startActivity(new Intent(this, DynamicLayoutActivity.class));
                 break;
         }
     }

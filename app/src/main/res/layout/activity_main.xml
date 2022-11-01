@@ -160,6 +160,15 @@
                 android:text="当前网络状态：" />
 
             <Button
+                android:id="@+id/btn_start_mqtt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginRight="20dp"
+                android:text="启动MQTT" />
+
+            <Button
                 android:id="@+id/btn_send"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -176,6 +185,15 @@
                 android:layout_marginTop="20dp"
                 android:layout_marginRight="20dp"
                 android:text="跳转动态布局页面" />
+
+            <Button
+                android:id="@+id/btn_restart"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginRight="20dp"
+                android:text="重启应用" />
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>

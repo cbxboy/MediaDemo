@@ -5,6 +5,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -54,11 +57,12 @@ import java.util.Enumeration;
 import java.util.List;
 
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener,NetStateChangeObserver {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, NetStateChangeObserver, IGetMessageCallBack {
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private Button btn_rotate_0, btn_rotate_90, btn_rotate_180, btn_rotate_270, btn_player, btn_clear, btn_show, btn_hide,btn_send,btn_dynamic;
-    private TextView tv_storage, tv_ip, tv_model,tv_network_type;
+    private Button btn_rotate_0, btn_rotate_90, btn_rotate_180, btn_rotate_270, btn_player, btn_clear, btn_show, btn_hide,
+            btn_start_mqtt, btn_send, btn_dynamic, btn_restart;
+    private TextView tv_storage, tv_ip, tv_model, tv_network_type;
 
     private FloatWindowService.FloatBinder floatBinder;
 
@@ -66,7 +70,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private MqttAndroidClient mqttAndroidClient;
     private String host = "tcp://210.73.216.2:1883";
     private MqttConnectOptions conOpt;
-    private String device_id,store_id;
+    private String device_id, store_id;
+
+    //
+    private MyServiceConnection myServiceConnection;
+    private MqttService mqttService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,6 +94,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tv_network_type = findViewById(R.id.tv_network_type);
         btn_send = findViewById(R.id.btn_send);
         btn_dynamic = findViewById(R.id.btn_dynamic);
+        btn_restart = findViewById(R.id.btn_restart);
+        btn_start_mqtt = findViewById(R.id.btn_start_mqtt);
         btn_send.setOnClickListener(this);
         btn_rotate_0.setOnClickListener(this);
         btn_rotate_90.setOnClickListener(this);
@@ -96,13 +106,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_show.setOnClickListener(this);
         btn_hide.setOnClickListener(this);
         btn_dynamic.setOnClickListener(this);
+        btn_restart.setOnClickListener(this);
+        btn_start_mqtt.setOnClickListener(this);
         tv_network_type.setText("当前网络状态：" + getNetWorkType());
         tv_model.setText("手机型号：" + getSystemModel());
         tv_ip.setText("当前IP：" + getIPAddress());
         tv_storage.setText("可用：" + getSDAvailableSize() + "/总量：" + getSDTotalSize());
 
-        device_id = SharePreferenceUtils.getString(this,"device_id");
-        store_id = SharePreferenceUtils.getString(this,"store_id");
+        device_id = SharePreferenceUtils.getString(this, "device_id");
+        store_id = SharePreferenceUtils.getString(this, "store_id");
+
+        myServiceConnection = new MyServiceConnection();
+        myServiceConnection.setIGetMessageCallBack(this);
 
         getStoragePermission();
         checkFloatPermission();
@@ -114,7 +129,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void setMqtt() {
         clientId = clientId + device_id;
-        mqttAndroidClient = new MqttAndroidClient(this,host,clientId);
+        mqttAndroidClient = new MqttAndroidClient(this, host, clientId);
         conOpt = new MqttConnectOptions();
         // 清除缓存
         conOpt.setCleanSession(true);
@@ -176,7 +191,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             MqttMessage message = new MqttMessage();
             message.setPayload(payload.getBytes());
             message.setQos(0);
-            mqttAndroidClient.publish(store_id, message,null, new IMqttActionListener() {
+            mqttAndroidClient.publish(store_id, message, null, new IMqttActionListener() {
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken) {
                     Log.i(TAG, "publish succeed!");
@@ -298,12 +313,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 unbindService(connection);
                 break;
             case R.id.btn_send:
-                publishMessage("Hello!");
+                MqttService.publishMessage("Hello!");
                 break;
             case R.id.btn_dynamic:
                 startActivity(new Intent(this, DynamicLayoutActivity.class));
                 break;
+            case R.id.btn_restart:
+                restart();
+                break;
+            case R.id.btn_start_mqtt:
+                startMqttService();
+                break;
         }
+    }
+
+    private void startMqttService() {
+        Intent intent = new Intent(this, MqttService.class);
+        bindService(intent, myServiceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    private void restart() {
+        Intent intent = getPackageManager().getLaunchIntentForPackage(getPackageName());
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
+        ((AlarmManager) getSystemService(ALARM_SERVICE)).set(AlarmManager.RTC, System.currentTimeMillis() + 1500L, pendingIntent);
+        System.exit(0);
     }
 
     private ServiceConnection connection = new ServiceConnection() {
@@ -462,5 +495,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onNetConnected(NetworkType networkType) {
         tv_network_type.setText(networkType.toString());
+    }
+
+    @Override
+    public void setMessage(String message) {
+        Log.d(TAG, "获取的消息" + message);
     }
 }

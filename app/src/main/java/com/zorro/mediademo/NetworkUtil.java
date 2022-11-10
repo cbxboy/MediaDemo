@@ -65,6 +65,9 @@ public class NetworkUtil {
                     case TelephonyManager.NETWORK_TYPE_IDEN:
                         netType = NetworkType.NETWORK_2G;
                         break;
+                    case TelephonyManager.NETWORK_TYPE_NR:
+                        netType = NetworkType.NETWORK_5G;
+                        break;
                     default:
                         String subtypeName = info.getSubtypeName();
                         if (subtypeName.equalsIgnoreCase("TD-SCDMA")

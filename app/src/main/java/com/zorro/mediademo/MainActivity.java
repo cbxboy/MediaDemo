@@ -25,8 +25,10 @@ import android.os.Environment;
 import android.os.IBinder;
 import android.os.StatFs;
 import android.text.format.Formatter;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -74,7 +76,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     //
     private MyServiceConnection myServiceConnection;
-    private MqttService mqttService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,6 +119,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         myServiceConnection = new MyServiceConnection();
         myServiceConnection.setIGetMessageCallBack(this);
+
+        Log.d(TAG,DeviceIdUtil.getDeviceId(this));
 
         getStoragePermission();
         checkFloatPermission();

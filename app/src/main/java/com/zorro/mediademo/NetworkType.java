@@ -8,6 +8,7 @@ package com.zorro.mediademo;
  */
 public enum  NetworkType {
     NETWORK_WIFI("WiFi"),
+    NETWORK_5G("5G"),
     NETWORK_4G("4G"),
     NETWORK_2G("2G"),
     NETWORK_3G("3G"),

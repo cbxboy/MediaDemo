@@ -56,8 +56,8 @@ public class MqttService extends Service {
         conOpt.setConnectionTimeout(10);
         // 心跳包发送间隔，单位：秒
         conOpt.setKeepAliveInterval(20);
-        conOpt.setUserName("1");
-        conOpt.setPassword("123".toCharArray());
+        conOpt.setUserName(userName);
+        conOpt.setPassword(passWord.toCharArray());
         doClientConnection();
     }
 

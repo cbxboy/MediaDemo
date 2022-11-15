@@ -25,11 +25,15 @@ public class SimplePlayerActivity extends AppCompatActivity {
     StandardGSYVideoPlayer videoPlayer;
 
     OrientationUtils orientationUtils;
+    FloatWindowService floatWindowService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_simple_player);
+        ActivityManager.getManager().addActivity(this);
+        floatWindowService = App.getFloatWindowService();
+        floatWindowService.hide();
         init();
     }
 

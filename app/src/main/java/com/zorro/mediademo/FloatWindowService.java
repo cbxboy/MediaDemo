@@ -14,10 +14,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-
-import androidx.annotation.Nullable;
-
-import javax.security.auth.callback.Callback;
+import android.widget.Toast;
 
 /**
  * @Author : cbx
@@ -43,13 +40,13 @@ public class FloatWindowService extends Service {
 
     private FloatBinder floatBinder = new FloatBinder();
 
+
     @Override
     public void onCreate() {
         super.onCreate();
         initView();
     }
 
-    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return floatBinder;
@@ -200,20 +197,9 @@ public class FloatWindowService extends Service {
         }
     }
 
-    private void hide() {
+    public void hide() {
         if (mFloatingLayout != null) {
             mFloatingLayout.setVisibility(View.GONE);
-        }
-    }
-
-    private void exit() {
-        try {
-            // 退出JVM,释放所占内存资源,0表示正常退出
-            System.exit(0);
-            // 从系统中kill掉应用程序
-            android.os.Process.killProcess(android.os.Process.myPid());
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 

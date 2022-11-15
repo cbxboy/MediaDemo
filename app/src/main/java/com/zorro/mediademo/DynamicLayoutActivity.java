@@ -11,12 +11,15 @@ import android.widget.TextView;
 public class DynamicLayoutActivity extends AppCompatActivity {
 
     private RelativeLayout rlay_root;
+    private FloatWindowService service;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ActivityManager.getManager().addActivity(this);
         setContentView(R.layout.activity_dynamic_layout);
         rlay_root = findViewById(R.id.rlay_root);
+        service = new FloatWindowService();
         addView();
         addViewTwo();
     }

@@ -73,6 +73,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String host = "tcp://210.73.216.2:1883";
     private MqttConnectOptions conOpt;
     private String device_id, store_id;
+    private FloatWindowService floatWindowService;
 
     //
     private MyServiceConnection myServiceConnection;
@@ -81,6 +82,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ActivityManager.getManager().addActivity(this);
         btn_rotate_0 = findViewById(R.id.btn_rotate_0);
         btn_rotate_90 = findViewById(R.id.btn_rotate_90);
         btn_rotate_180 = findViewById(R.id.btn_rotate_180);
@@ -313,7 +315,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 bindService(bindIntent, connection, BIND_AUTO_CREATE);
                 break;
             case R.id.btn_hide:
-                unbindService(connection);
+                //unbindService(connection);
+                floatWindowService.hide();
                 break;
             case R.id.btn_send:
                 MqttService.publishMessage("Hello!");
@@ -347,7 +350,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             floatBinder = (FloatWindowService.FloatBinder) iBinder;
-            FloatWindowService floatWindowService = floatBinder.getService();
+            floatWindowService = floatBinder.getService();
+            App.setFloatWindowService(floatWindowService);
             floatWindowService.setCallback(new FloatWindowService.Callback() {
                 @Override
                 public void closeClick() {
@@ -357,6 +361,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 @Override
                 public void nextClick() {
                     Log.d(TAG, "nextClick");
+                    floatWindowService.hide();
                     startActivity(new Intent(MainActivity.this, SimplePlayerActivity.class));
                 }
 

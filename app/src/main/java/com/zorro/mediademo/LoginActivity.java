@@ -21,6 +21,8 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        ActivityManager.getManager().addActivity(this);
+
         edit_num = findViewById(R.id.edit_num);
         edit_id = findViewById(R.id.edit_id);
         btn_login = findViewById(R.id.btn_login);
@@ -41,5 +43,6 @@ public class LoginActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(device_id) && !TextUtils.isEmpty(store_id)) {
             startActivity(new Intent(LoginActivity.this,MainActivity.class));
         }
+        startActivity(new Intent(LoginActivity.this,MainActivity.class));
     }
 }
